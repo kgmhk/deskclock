@@ -16,6 +16,7 @@ import com.gkwak.deskclock.weather.Weather;
 
 import java.util.concurrent.ExecutionException;
 
+//요것은 테스트임당
 public class MainActivity extends AppCompatActivity {
     CustomDialog dialog;
     TextView daily_text_view;

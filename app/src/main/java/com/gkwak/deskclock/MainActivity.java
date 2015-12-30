@@ -1,5 +1,6 @@
 package com.gkwak.deskclock;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -26,12 +27,13 @@ import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 //요것은 테스트임당 요것도
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     CustomDialog dialog;
     TextView daily_text_view;
     RelativeLayout r_layout;
@@ -55,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
         daily_text_view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
             String temperature = String.valueOf(w.getTemprature());
 
-            r_layout.setBackground(drawable);
+//            r_layout.setBackground(drawable);
             //여기에 날씨를 비교하여 뒷 배경을 바꿔볼까?
 
 //            daily_text_view.setText(temperature);

@@ -2,6 +2,8 @@ package com.gkwak.deskclock.network;
 
 
 
+import android.util.Log;
+
 import com.gkwak.deskclock.weather.Weather;
 
 import org.json.JSONException;
@@ -32,6 +34,7 @@ public class OpenWeatherAPIClient {
 //        String urlString = openWeatherURL + "?lat=35&lon=139&appid=2de143494c0b295cca9337e1e96b00e0";
         String urlString = openWeatherURL + "?lat="+lat+"&lon="+lon + "&appid=2de143494c0b295cca9337e1e96b00e0";
 
+        Log.v("getOpenURL : ", urlString);
         try {
             // call API by using HTTPURLConnection
             URL url = new URL(urlString);

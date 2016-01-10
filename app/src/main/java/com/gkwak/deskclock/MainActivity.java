@@ -1,7 +1,9 @@
 package com.gkwak.deskclock;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -23,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gkwak.deskclock.coustomdialog.CustomDialog;
+import com.gkwak.deskclock.gps.Gps;
 import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
 
@@ -38,15 +41,32 @@ public class MainActivity extends Activity {
     TextView daily_text_view;
     RelativeLayout r_layout;
     LocationManager locationManager;
+    Gps gps;
+
+    private static final String[] INITIAL_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.READ_CONTACTS
+    };
+
+    private static final int INITIAL_REQUEST=1337;
+    private static final int CAMERA_REQUEST=INITIAL_REQUEST+1;
+    private static final int CONTACTS_REQUEST=INITIAL_REQUEST+2;
+    private static final int LOCATION_REQUEST=INITIAL_REQUEST+3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (!canAccessLocation() || !canAccessContacts()) {
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        }
+
         dialog = new CustomDialog(this);
         daily_text_view = (TextView)findViewById(R.id.daily_text_view);
         r_layout = (RelativeLayout) findViewById(R.id.r_layout);
+        // GPS Class
+        gps = new Gps();
         // Location
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new MyLocationListener();
@@ -54,20 +74,41 @@ public class MainActivity extends Activity {
         // BackGround
         Resources res = getResources(); //resource handle
         Drawable drawable = res.getDrawable(R.drawable.rain);
-
-
-
+        // TODO :  다이얼로그로부터 문자 받아오기.
         daily_text_view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.show();
             }
         });
+    }
 
+    private boolean canAccessLocation() {
+        return(hasPermission(Manifest.permission.ACCESS_FINE_LOCATION));
+    }
+
+    private boolean canAccessContacts() {
+        return(hasPermission(Manifest.permission.READ_CONTACTS));
+    }
+
+
+    private boolean hasPermission(String perm) {
+        return(PackageManager.PERMISSION_GRANTED==checkSelfPermission(perm));
+    }
+
+    private void getWeatehr (Double Long, Double Lati) {
+
+        Log.v("getWeatehr GPS",Long.toString() + Lati.toString());
+
+        int gpsLong = Long.intValue();
+        int gpsLati = Lati.intValue();
+
+        Log.v("getWeatehr GPS", String.valueOf(gpsLong) + '/' + String.valueOf(gpsLati) );
         // 날씨를 읽어오는 API 호출
         OpenWeatherAPITask t= new OpenWeatherAPITask();
         try {
-            Weather w = t.execute(35,139).get();
+
+            Weather w = t.execute(gpsLati, gpsLong).get();
 
             System.out.println("Temp :"+w.getTemprature());
             System.out.println("현재 날씨 :"+w.getWeather_desc());
@@ -79,8 +120,6 @@ public class MainActivity extends Activity {
 
 //            daily_text_view.setText(temperature);
             //w.getTemprature());
-
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -103,6 +142,9 @@ public class MainActivity extends Activity {
             String latitude = "Latitude: " + loc.getLatitude();
             System.out.println("lat" + latitude);
 
+            gps.setLong(loc.getLongitude());
+            gps.setLati(loc.getLatitude());
+
         /*------- To get city name from coordinates -------- */
             String cityName = null;
             Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
@@ -115,10 +157,14 @@ public class MainActivity extends Activity {
                 cityName = addresses.get(0).getLocality();
             }
             catch (IOException e) {
+                Log.e("err", e.toString());
                 e.printStackTrace();
             }
             String s = longitude + "\n" + latitude + "\n\nMy Current City is: "
                     + cityName;
+
+
+            getWeatehr(gps.getLong(), gps.getLati());
             Log.v("test", s);
         }
 
@@ -137,6 +183,12 @@ public class MainActivity extends Activity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d("TestAppActivity", "onResume" + dialog.get());
     }
 
     @Override

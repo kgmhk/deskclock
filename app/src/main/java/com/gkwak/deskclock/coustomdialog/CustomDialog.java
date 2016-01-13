@@ -30,11 +30,11 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
         setContentView(R.layout.custom_dialog);
 
         daily_text = (EditText)findViewById(R.id.dailyText);
-        yes_btn = (Button)findViewById(R.id.yes_btn);
-        no_btn = (Button)findViewById(R.id.no_btn);
+//        yes_btn = (Button)findViewById(R.id.yes_btn);
+//        no_btn = (Button)findViewById(R.id.no_btn);
 
         set(daily_text.getText().toString());
-        yes_btn.setOnClickListener(this);
+//        yes_btn.setOnClickListener(this);
 
     }
 

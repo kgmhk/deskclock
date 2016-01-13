@@ -51,7 +51,8 @@
             android:layout_height="match_parent"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/daily_text_view"
-            android:hint="@string/daily_text" />
+            android:hint="@string/daily_text"
+            android:gravity="center" />
 
     </LinearLayout>
 

@@ -2,7 +2,10 @@ package com.gkwak.deskclock;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -17,9 +20,11 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,19 +57,21 @@ public class MainActivity extends Activity {
     private static final int CAMERA_REQUEST=INITIAL_REQUEST+1;
     private static final int CONTACTS_REQUEST=INITIAL_REQUEST+2;
     private static final int LOCATION_REQUEST=INITIAL_REQUEST+3;
+    private static String DAILY_TEXT_PREF = "dailyTextPref";
+    private static String DAILY_TEXT = "dailyText";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (!canAccessLocation() || !canAccessContacts()) {
-            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
-        }
-
         dialog = new CustomDialog(this);
         daily_text_view = (TextView)findViewById(R.id.daily_text_view);
         r_layout = (RelativeLayout) findViewById(R.id.r_layout);
+        // Permission Check
+        if (!canAccessLocation() || !canAccessContacts()) {
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        }
         // GPS Class
         gps = new Gps();
         // Location
@@ -74,11 +81,32 @@ public class MainActivity extends Activity {
         // BackGround
         Resources res = getResources(); //resource handle
         Drawable drawable = res.getDrawable(R.drawable.rain);
-        // TODO :  다이얼로그로부터 문자 받아오기.
+        //SharedPreference
+        if (getDailyText().equals("")) daily_text_view.setText("오늘의 한마디를 적어보세요.1");
+        daily_text_view.setText(getDailyText());
+
+        // TODO : 리팩토링
         daily_text_view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+                final View yourCustomView = inflater.inflate(R.layout.custom_dialog, null);
+
+                final TextView etName = (EditText) yourCustomView.findViewById(R.id.dailyText);
+                AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Enter the Zip Code")
+                        .setView(yourCustomView)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                String daily_text = etName.getText().toString();
+                                setDailyText(daily_text);
+                                daily_text_view.setText(daily_text);
+                            }
+                        })
+                        .setNegativeButton("Cancel", null).create();
                 dialog.show();
+
+//                dialog.show();
             }
         });
     }
@@ -95,6 +123,19 @@ public class MainActivity extends Activity {
     private boolean hasPermission(String perm) {
         return(PackageManager.PERMISSION_GRANTED==checkSelfPermission(perm));
     }
+
+    private String getDailyText() {
+        SharedPreferences dailyText = getSharedPreferences(DAILY_TEXT_PREF, MODE_PRIVATE);
+        return dailyText.getString(DAILY_TEXT,"");
+    }
+
+    private void setDailyText(String daily_text){
+        SharedPreferences pref = getSharedPreferences(DAILY_TEXT_PREF, MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(DAILY_TEXT, daily_text);
+        editor.commit();
+    }
+
 
     private void getWeatehr (Double Long, Double Lati) {
 
@@ -188,7 +229,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("TestAppActivity", "onResume" + dialog.get());
+        Log.d("TestAppActivity", "onResume");
     }
 
     @Override

@@ -52,7 +52,7 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/daily_text_view"
             android:hint="@string/daily_text"
-            android:gravity="center" />
+            android:gravity="center|center_horizontal" />
 
     </LinearLayout>
 

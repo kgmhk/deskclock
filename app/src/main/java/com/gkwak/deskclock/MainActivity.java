@@ -68,10 +68,11 @@ public class MainActivity extends Activity {
         dialog = new CustomDialog(this);
         daily_text_view = (TextView)findViewById(R.id.daily_text_view);
         r_layout = (RelativeLayout) findViewById(R.id.r_layout);
+
         // Permission Check
-        if (!canAccessLocation() || !canAccessContacts()) {
-            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
-        }
+//        if (!canAccessLocation() || !canAccessContacts()) {
+//            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+//        }
         // GPS Class
         gps = new Gps();
         // Location

@@ -20,6 +20,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.ColorInt;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -42,6 +43,7 @@ import com.gkwak.deskclock.coustomdialog.CustomDialog;
 import com.gkwak.deskclock.gps.Gps;
 import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
+import com.larswerkman.lobsterpicker.OnColorListener;
 import com.larswerkman.lobsterpicker.adapters.BitmapColorAdapter;
 import com.larswerkman.lobsterpicker.sliders.LobsterShadeSlider;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
@@ -118,24 +120,25 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
                 final View yourCustomView = inflater.inflate(R.layout.custom_dialog, null);
-                final LobsterShadeSlider shadeSlider = (LobsterShadeSlider) findViewById(R.id.shadeslider);
+                final LobsterShadeSlider shadeSlider = (LobsterShadeSlider) yourCustomView.findViewById(R.id.shadeslider);
                 final TextView etName = (EditText) yourCustomView.findViewById(R.id.dailyText);
 
-                shadeSlider.setColor(Color.WHITE);
+
                 AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Enter the Zip Code")
+                        .setTitle("Enter Today Topic")
                         .setView(yourCustomView)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        .setPositiveButton(R.string.yes_btn, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
+                                Log.d("color : ", shadeSlider.getColor() + "");
                                 String daily_text = etName.getText().toString();
                                 setDailyText(daily_text);
                                 daily_text_view.setText(daily_text);
                             }
                         })
-                        .setNegativeButton("Cancel", null).create();
+                        .setNegativeButton(R.string.no_btn, null).create();
                 dialog.show();
 
-//                dialog.show();
+
             }
         });
     }

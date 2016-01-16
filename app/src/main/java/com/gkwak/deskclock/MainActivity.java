@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -19,6 +20,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.annotation.ColorInt;
 import android.support.design.widget.FloatingActionButton;
@@ -26,6 +28,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.format.Time;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +37,7 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CalendarView;
+import android.widget.DigitalClock;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -43,11 +47,13 @@ import com.gkwak.deskclock.coustomdialog.CustomDialog;
 import com.gkwak.deskclock.gps.Gps;
 import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
+import com.larswerkman.lobsterpicker.LobsterPicker;
 import com.larswerkman.lobsterpicker.OnColorListener;
 import com.larswerkman.lobsterpicker.adapters.BitmapColorAdapter;
 import com.larswerkman.lobsterpicker.sliders.LobsterShadeSlider;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -58,6 +64,8 @@ import java.util.concurrent.ExecutionException;
 //요것은 테스트임당 요것도
 public class MainActivity extends Activity {
     private static final int SELECT_IMAGE = 1;
+    MaterialCalendarView mCal;
+    DigitalClock digital_clock;
     CustomDialog dialog;
     TextView daily_text_view;
     RelativeLayout r_layout;
@@ -74,7 +82,11 @@ public class MainActivity extends Activity {
     private static final int CONTACTS_REQUEST=INITIAL_REQUEST+2;
     private static final int LOCATION_REQUEST=INITIAL_REQUEST+3;
     private static String DAILY_TEXT_PREF = "dailyTextPref";
+    private static String DAILY_IMAGE_PREF = "dailyImagePref";
+    private static String DAILY_COLOR_PREF = "dailyColorPref";
     private static String DAILY_TEXT = "dailyText";
+    private static String DAILY_IMAGE = "dailyImage";
+    private static String DAILY_COLOR = "dailyColor";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,12 +102,16 @@ public class MainActivity extends Activity {
         dialog = new CustomDialog(this);
         daily_text_view = (TextView)findViewById(R.id.daily_text_view);
         r_layout = (RelativeLayout) findViewById(R.id.r_layout);
+        digital_clock = (DigitalClock) findViewById(R.id.digitalClock);
 
 //         Permission Check
 //        if (!canAccessLocation() || !canAccessContacts()) {
 //            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
 //        }
-
+// set Today Date
+        mCal = (MaterialCalendarView) findViewById(R.id.calendarView);
+        Calendar c = Calendar.getInstance();
+        mCal.setDateSelected(c,true);
 
         // GPS Class
         gps = new Gps();
@@ -108,31 +124,47 @@ public class MainActivity extends Activity {
         Drawable drawable = res.getDrawable(R.drawable.rain);
         //SharedPreference
         if (getDailyText().equals("")) daily_text_view.setText("");
-        daily_text_view.setText(getDailyText());
-        // set Today Date
-        MaterialCalendarView mCal = (MaterialCalendarView) findViewById(R.id.calendarView);
-        Calendar c = Calendar.getInstance();
-        mCal.setDateSelected(c,true);
+        else {
+            Bitmap bitmap = decodeBase64(getDailyImage());
+            BitmapDrawable ob = new BitmapDrawable(getResources(), bitmap);
+            r_layout.setBackgroundDrawable(ob);
+            daily_text_view.setText(getDailyText());
+            if (getDailyColor() != 0) {
+                mCal.setSelectionColor(getDailyColor());
+                daily_text_view.setTextColor(getDailyColor());
+                digital_clock.setTextColor(getDailyColor());
+            }
+        }
+
 
         // TODO : 리팩토링
         daily_text_view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
-                final View yourCustomView = inflater.inflate(R.layout.custom_dialog, null);
-                final LobsterShadeSlider shadeSlider = (LobsterShadeSlider) yourCustomView.findViewById(R.id.shadeslider);
-                final TextView etName = (EditText) yourCustomView.findViewById(R.id.dailyText);
-
-
+                final View dialogCustomView = inflater.inflate(R.layout.custom_dialog, null);
+                final TextView etName = (EditText) dialogCustomView.findViewById(R.id.dailyText);
+                final LobsterPicker lobsterPicker = (LobsterPicker) dialogCustomView.findViewById(R.id.lobsterpicker);
+                etName.setText(getDailyText());
                 AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Enter Today Topic")
-                        .setView(yourCustomView)
+                        .setView(dialogCustomView)
                         .setPositiveButton(R.string.yes_btn, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                Log.d("color : ", shadeSlider.getColor() + "");
                                 String daily_text = etName.getText().toString();
                                 setDailyText(daily_text);
+                                setDailyColor(lobsterPicker.getColor());
+
                                 daily_text_view.setText(daily_text);
+                                mCal.setSelectionColor(lobsterPicker.getColor());
+                                daily_text_view.setTextColor(lobsterPicker.getColor());
+                                digital_clock.setTextColor(lobsterPicker.getColor());
+                            }
+                        })
+                        .setNeutralButton("BackGround", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                openGallery();
                             }
                         })
                         .setNegativeButton(R.string.no_btn, null).create();
@@ -161,10 +193,34 @@ public class MainActivity extends Activity {
         return dailyText.getString(DAILY_TEXT,"");
     }
 
+    private String getDailyImage() {
+        SharedPreferences dailyImage = getSharedPreferences(DAILY_IMAGE_PREF, MODE_PRIVATE);
+        return dailyImage.getString(DAILY_IMAGE,"");
+    }
+
+    private int getDailyColor() {
+        SharedPreferences dailyColor = getSharedPreferences(DAILY_COLOR_PREF, MODE_PRIVATE);
+        return dailyColor.getInt(DAILY_COLOR, 0);
+    }
+
     private void setDailyText(String daily_text){
         SharedPreferences pref = getSharedPreferences(DAILY_TEXT_PREF, MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(DAILY_TEXT, daily_text);
+        editor.commit();
+    }
+
+    private void setDailyImage(String daily_image){
+        SharedPreferences pref = getSharedPreferences(DAILY_IMAGE_PREF, MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(DAILY_IMAGE, daily_image);
+        editor.commit();
+    }
+
+    private void setDailyColor(int daily_color){
+        SharedPreferences pref = getSharedPreferences(DAILY_COLOR_PREF, MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putInt(DAILY_COLOR, daily_color);
         editor.commit();
     }
 
@@ -187,12 +243,6 @@ public class MainActivity extends Activity {
             System.out.println("현재 날씨 :"+w.getWeather_desc());
 
             String temperature = String.valueOf(w.getTemprature());
-
-//            r_layout.setBackground(drawable);
-            //여기에 날씨를 비교하여 뒷 배경을 바꿔볼까?
-
-//            daily_text_view.setText(temperature);
-            //w.getTemprature());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -282,6 +332,28 @@ public class MainActivity extends Activity {
             return true;
         }
 
+        if (id == R.id.menu_change_text_color) {
+
+//            LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
+//            final View dialogCustomView = inflater.inflate(R.layout.custom_dialog_color, null);
+//            final LobsterPicker lobsterPicker = (LobsterPicker) dialogCustomView.findViewById(R.id.lobsterpicker);
+//            AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
+//                    .setTitle("Select Color")
+//                    .setView(dialogCustomView)
+//                    .setPositiveButton(R.string.yes_btn, new DialogInterface.OnClickListener() {
+//                        public void onClick(DialogInterface dialog, int whichButton) {
+//                            Log.d("color : ", lobsterPicker.getColor() + "");
+//                            setDailyColor(lobsterPicker.getColor());
+//                            mCal.setSelectionColor(lobsterPicker.getColor());
+//                            daily_text_view.setTextColor(lobsterPicker.getColor());
+//                            digital_clock.setTextColor(lobsterPicker.getColor());
+//                        }
+//                    })
+//                    .setNegativeButton(R.string.no_btn, null).create();
+//            dialog.show();
+
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -303,6 +375,9 @@ public class MainActivity extends Activity {
                         Bitmap bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), data.getData());
                         BitmapDrawable ob = new BitmapDrawable(getResources(), bitmap);
                         r_layout.setBackgroundDrawable(ob);
+
+                        setDailyImage(encodeTobase64(bitmap));
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -312,6 +387,25 @@ public class MainActivity extends Activity {
                 }
             }
         }
+    }
+
+    // method for bitmap to base64
+    public static String encodeTobase64(Bitmap image) {
+        Bitmap immage = image;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        immage.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] b = baos.toByteArray();
+        String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+
+        Log.d("Image Log:", imageEncoded);
+        return imageEncoded;
+    }
+
+    // method for base64 to bitmap
+    public static Bitmap decodeBase64(String input) {
+        byte[] decodedByte = Base64.decode(input, 0);
+        return BitmapFactory
+                .decodeByteArray(decodedByte, 0, decodedByte.length);
     }
 
 

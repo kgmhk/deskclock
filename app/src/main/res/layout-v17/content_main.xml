@@ -26,7 +26,7 @@
             <DigitalClock
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/textClock"
+                android:id="@+id/digitalClock"
                 android:textIsSelectable="false"
                 android:textSize="50dp"
                 android:gravity="center" />

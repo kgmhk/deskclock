@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">DeskClock</string>
     <string name="action_settings">Settings</string>
-    <string name="daily_text">오늘의 한마디를 적어보세요.</string>
-    <string name="yes_btn">확인</string>
-    <string name="no_btn">취소</string>
+    <string name="menu_change_backgroun">Shift the scenes</string>
+    <string name="daily_text">Write Today Topic</string>
+    <string name="yes_btn">OK</string>
+    <string name="no_btn">CANCEL</string>
 </resources>

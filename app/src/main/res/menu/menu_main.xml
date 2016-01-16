@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.gkwak.deskclock.MainActivity">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/menu_change_backgroun"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="@string/menu_change_backgroun"
         app:showAsAction="never" />
 </menu>

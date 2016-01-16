@@ -17,6 +17,18 @@
             android:hint="@string/daily_text"
             android:gravity="center_horizontal" />
 
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <com.larswerkman.lobsterpicker.sliders.LobsterShadeSlider
+                android:id="@+id/shadeslider"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
     </LinearLayout>
 
 </RelativeLayout>

@@ -26,10 +26,11 @@
             <DigitalClock
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/digitalClock"
+                android:id="@+id/textClock"
                 android:textIsSelectable="false"
                 android:textSize="50dp"
                 android:gravity="center" />
+
         </LinearLayout>
 
         <FrameLayout

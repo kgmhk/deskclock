@@ -5,9 +5,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
@@ -15,15 +19,20 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.CalendarView;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -33,15 +42,20 @@ import com.gkwak.deskclock.coustomdialog.CustomDialog;
 import com.gkwak.deskclock.gps.Gps;
 import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
+import com.larswerkman.lobsterpicker.adapters.BitmapColorAdapter;
+import com.larswerkman.lobsterpicker.sliders.LobsterShadeSlider;
+import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 //요것은 테스트임당 요것도
 public class MainActivity extends Activity {
+    private static final int SELECT_IMAGE = 1;
     CustomDialog dialog;
     TextView daily_text_view;
     RelativeLayout r_layout;
@@ -63,16 +77,24 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        // Do not turn off Screen
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_main);
 
+        CalendarView cal = new CalendarView(this);
         dialog = new CustomDialog(this);
         daily_text_view = (TextView)findViewById(R.id.daily_text_view);
         r_layout = (RelativeLayout) findViewById(R.id.r_layout);
 
-        // Permission Check
+//         Permission Check
 //        if (!canAccessLocation() || !canAccessContacts()) {
 //            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
 //        }
+
+
         // GPS Class
         gps = new Gps();
         // Location
@@ -83,8 +105,12 @@ public class MainActivity extends Activity {
         Resources res = getResources(); //resource handle
         Drawable drawable = res.getDrawable(R.drawable.rain);
         //SharedPreference
-        if (getDailyText().equals("")) daily_text_view.setText("오늘의 한마디를 적어보세요.1");
+        if (getDailyText().equals("")) daily_text_view.setText("");
         daily_text_view.setText(getDailyText());
+        // set Today Date
+        MaterialCalendarView mCal = (MaterialCalendarView) findViewById(R.id.calendarView);
+        Calendar c = Calendar.getInstance();
+        mCal.setDateSelected(c,true);
 
         // TODO : 리팩토링
         daily_text_view.setOnClickListener(new View.OnClickListener() {
@@ -92,8 +118,10 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
                 final View yourCustomView = inflater.inflate(R.layout.custom_dialog, null);
-
+                final LobsterShadeSlider shadeSlider = (LobsterShadeSlider) findViewById(R.id.shadeslider);
                 final TextView etName = (EditText) yourCustomView.findViewById(R.id.dailyText);
+
+                shadeSlider.setColor(Color.WHITE);
                 AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Enter the Zip Code")
                         .setView(yourCustomView)
@@ -175,6 +203,8 @@ public class MainActivity extends Activity {
 
         @Override
         public void onLocationChanged(Location loc) {
+
+            Log.d("onLocationChanged : ","on");
             Toast.makeText(
                     getBaseContext(),
                     "Location changed: Lat: " + loc.getLatitude() + " Lng: "
@@ -214,7 +244,9 @@ public class MainActivity extends Activity {
         public void onProviderDisabled(String provider) {}
 
         @Override
-        public void onProviderEnabled(String provider) {}
+        public void onProviderEnabled(String provider) {
+            Log.v("onProviderEnabled", "onProviderEnabled");
+        }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -241,10 +273,43 @@ public class MainActivity extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.menu_change_backgroun) {
+            Log.d("select menu " , " ");
+            openGallery();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void openGallery() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);//
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_IMAGE);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SELECT_IMAGE) {
+            if (resultCode == MainActivity.this.RESULT_OK) {
+                if (data != null) {
+                    try {
+                        Log.d("onActivityResult", "give a photo");
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), data.getData());
+                        BitmapDrawable ob = new BitmapDrawable(getResources(), bitmap);
+                        r_layout.setBackgroundDrawable(ob);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                } else if (resultCode == MainActivity.this.RESULT_CANCELED) {
+                    Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+
 }

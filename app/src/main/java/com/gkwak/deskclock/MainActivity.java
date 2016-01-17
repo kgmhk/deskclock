@@ -7,7 +7,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -47,6 +49,8 @@ import com.gkwak.deskclock.coustomdialog.CustomDialog;
 import com.gkwak.deskclock.gps.Gps;
 import com.gkwak.deskclock.network.OpenWeatherAPITask;
 import com.gkwak.deskclock.weather.Weather;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.larswerkman.lobsterpicker.LobsterPicker;
 import com.larswerkman.lobsterpicker.OnColorListener;
 import com.larswerkman.lobsterpicker.adapters.BitmapColorAdapter;
@@ -61,9 +65,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-//요것은 테스트임당 요것도
 public class MainActivity extends Activity {
     private static final int SELECT_IMAGE = 1;
+    private static final String TAG = "MainActivity";
     MaterialCalendarView mCal;
     DigitalClock digital_clock;
     CustomDialog dialog;
@@ -87,6 +91,8 @@ public class MainActivity extends Activity {
     private static String DAILY_TEXT = "dailyText";
     private static String DAILY_IMAGE = "dailyImage";
     private static String DAILY_COLOR = "dailyColor";
+    private Tracker mTracker;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,8 +101,19 @@ public class MainActivity extends Activity {
 
         // Do not turn off Screen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
 
         setContentView(R.layout.activity_main);
+
+        startActivity(new Intent(this, SplashActivity.class));
+
+        // Google Analytics
+
+        // Obtain the shared Tracker instance.
+        AnalyticsApplication application = (AnalyticsApplication) getApplication();
+        mTracker = application.getDefaultTracker();
 
         CalendarView cal = new CalendarView(this);
         dialog = new CustomDialog(this);
@@ -116,24 +133,23 @@ public class MainActivity extends Activity {
         // GPS Class
         gps = new Gps();
         // Location
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new MyLocationListener();
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
+//        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//        LocationListener locationListener = new MyLocationListener();
+//        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
         // BackGround
         Resources res = getResources(); //resource handle
         Drawable drawable = res.getDrawable(R.drawable.rain);
         //SharedPreference
-        if (getDailyText().equals("")) daily_text_view.setText("");
-        else {
+        if (!getDailyText().equals("")) daily_text_view.setText(getDailyText());
+        if (!getDailyImage().equals("")) {
             Bitmap bitmap = decodeBase64(getDailyImage());
             BitmapDrawable ob = new BitmapDrawable(getResources(), bitmap);
             r_layout.setBackgroundDrawable(ob);
-            daily_text_view.setText(getDailyText());
-            if (getDailyColor() != 0) {
-                mCal.setSelectionColor(getDailyColor());
-                daily_text_view.setTextColor(getDailyColor());
-                digital_clock.setTextColor(getDailyColor());
-            }
+        }
+        if (getDailyColor() != 0) {
+            mCal.setSelectionColor(getDailyColor());
+            daily_text_view.setTextColor(getDailyColor());
+            digital_clock.setTextColor(getDailyColor());
         }
 
 
@@ -147,7 +163,7 @@ public class MainActivity extends Activity {
                 final LobsterPicker lobsterPicker = (LobsterPicker) dialogCustomView.findViewById(R.id.lobsterpicker);
                 etName.setText(getDailyText());
                 AlertDialog dialog = new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Enter Today Topic")
+                        .setTitle(R.string.custom_dialog_title)
                         .setView(dialogCustomView)
                         .setPositiveButton(R.string.yes_btn, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
@@ -161,7 +177,7 @@ public class MainActivity extends Activity {
                                 digital_clock.setTextColor(lobsterPicker.getColor());
                             }
                         })
-                        .setNeutralButton("BackGround", new DialogInterface.OnClickListener() {
+                        .setNeutralButton(R.string.backgroun_change, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 openGallery();
@@ -169,11 +185,11 @@ public class MainActivity extends Activity {
                         })
                         .setNegativeButton(R.string.no_btn, null).create();
                 dialog.show();
-
-
             }
         });
     }
+
+
 
     private boolean canAccessLocation() {
         return(hasPermission(Manifest.permission.ACCESS_FINE_LOCATION));
@@ -311,13 +327,15 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
     @Override
     protected void onResume() {
         super.onResume();
         Log.d("TestAppActivity", "onResume");
-    }
 
+        Log.i(TAG, "Setting screen name Main ");
+        mTracker.setScreenName("Main");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will

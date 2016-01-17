@@ -17,7 +17,18 @@
             android:layout_height="wrap_content"
             android:id="@+id/dailyText"
             android:hint="@string/daily_text"
-            android:gravity="center_horizontal" />
+            android:gravity="center_horizontal"
+            android:singleLine="true"
+            android:maxLength="30" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/font_color"
+            android:id="@+id/textView"
+            android:textColor="#000000"
+            android:layout_marginLeft="20dp" />
+
         <com.larswerkman.lobsterpicker.LobsterPicker
             android:id="@+id/lobsterpicker"
             android:layout_width="wrap_content"

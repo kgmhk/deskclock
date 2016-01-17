@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TableClock</string>
+    <string name="action_settings">설정</string>
+    <string name="backgroun_change">배경설정</string>
+    <string name="daily_text">오늘의 다짐을 적어보세요.</string>
+    <string name="menu_change_backgroun">배경화면 바꾸기.</string>
+    <string name="menu_change_text_color">글자색 변경.</string>
+    <string name="no_btn">취소</string>
+    <string name="yes_btn">적용</string>
+    <string name="font_color">글자색</string>
+    <string name="custom_dialog_title">오늘의 다짐</string>
+</resources>
